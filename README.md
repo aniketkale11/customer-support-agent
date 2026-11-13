@@ -5,11 +5,6 @@ An agentic customer support resolution system.
 
 # A practical Agentic AI project for aspiring Forward Deployed Engineers
 
-**Stack:** Python, LangGraph, FastAPI, PostgreSQL
-
-**Project level:** Intermediate
-
-**Suggested timeline:** 3–4 weeks, depending on your experience
 
 **What you’ll build:** A support system that investigates customer problems, retrieves relevant policies, proposes solutions, executes approved actions, and records the outcome.
 
