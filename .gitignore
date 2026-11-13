@@ -1,0 +1,23 @@
+# Virtual Environment
+.venv/
+env/
+venv/
+
+# Byte-compiled / optimized files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Environment variables
+.env
+
+# Vector DB / Local stores
+chroma_db/
+*.db
+*.sqlite3
+.deepeval/
+
+# IDE / System
+.vscode/
+.idea/
+.DS_Store

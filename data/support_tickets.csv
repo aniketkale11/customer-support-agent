@@ -1,0 +1,16 @@
+ticket_id,customer_id,order_id,return_id,refund_id,category,customer_message,priority,ticket_status,resolution_summary,created_at,updated_at
+TKT4001,CUST001,ORD1001,RET2001,REF3001,REFUND_STATUS,"I returned my headphones last week, but I haven't received my refund.",HIGH,OPEN,Refund is processing; do not claim completion until provider confirms.,2026-10-27T09:20:00,2026-10-27T09:20:00
+TKT4002,CUST002,ORD1002,RET2002,REF3002,REFUND_CONFIRMATION,Can you confirm my mouse refund?,MEDIUM,RESOLVED,Provider confirmed refund completion.,2026-10-16T11:05:00,2026-10-16T11:30:00
+TKT4003,CUST003,ORD1003,RET2003,REF3003,RETURN_STATUS,What happens after I send back my keyboard?,MEDIUM,OPEN,Await return receipt and inspection before proceeding.,2026-10-16T13:15:00,2026-10-16T13:15:00
+TKT4004,CUST004,ORD1004,RET2004,REF3004,REFUND_REQUEST,My speaker is faulty. Can I get a refund?,HIGH,PENDING_HUMAN_APPROVAL,Eligible based on current sample records; human approval required.,2026-10-14T15:45:00,2026-10-14T16:00:00
+TKT4005,CUST005,ORD1005,RET2005,REF3005,RETURN_STATUS,I submitted a return for my USB-C hub.,LOW,OPEN,Return parcel has not been received; refund remains on hold.,2026-10-20T10:00:00,2026-10-20T10:00:00
+TKT4006,CUST006,ORD1006,RET2006,REF3006,REFUND_APPEAL,Why was my smartwatch refund blocked?,HIGH,ESCALATED,Human reviewer rejected the request; escalated for further review.,2026-10-13T08:40:00,2026-10-13T09:10:00
+TKT4007,CUST007,ORD1007,RET2007,REF3007,REFUND_STATUS,When will I get the earbuds refund?,MEDIUM,OPEN,Return not yet received; explain current status and next step.,2026-10-22T12:20:00,2026-10-22T12:20:00
+TKT4008,CUST008,ORD1008,RET2008,REF3008,DAMAGED_ITEM,My laptop stand arrived damaged.,HIGH,PENDING_HUMAN_APPROVAL,Damage case needs evidence review and approval before refund API call.,2026-10-23T14:10:00,2026-10-23T14:30:00
+TKT4009,CUST009,ORD1009,RET2009,REF3009,REFUND_DENIAL,Why is my webcam return not eligible?,MEDIUM,ESCALATED,Sample policy indicates request is outside the return window.,2026-10-02T10:25:00,2026-10-02T10:50:00
+TKT4010,CUST010,ORD1010,RET2010,REF3010,REFUND_STATUS,The power bank refund is taking time.,HIGH,OPEN,Refund API accepted the request; settlement has not been confirmed.,2026-10-26T17:15:00,2026-10-26T17:15:00
+TKT4011,CUST011,ORD1013,RET2011,REF3011,REFUND_CONFIRMATION,Has my controller refund been completed?,MEDIUM,RESOLVED,Provider confirmed refund completion.,2026-10-14T09:00:00,2026-10-14T09:25:00
+TKT4012,CUST013,ORD1015,RET2012,REF3012,REFUND_DENIAL,I want to return my microphone.,MEDIUM,ESCALATED,Return rejected under sample policy; manual review may be requested.,2026-10-15T11:35:00,2026-10-15T12:00:00
+TKT4013,CUST016,ORD1018,RET2013,REF3013,REFUND_REQUEST,My router is faulty; please refund me.,HIGH,PENDING_HUMAN_APPROVAL,Defect confirmed; waiting for authorized approval.,2026-10-18T16:05:00,2026-10-18T16:20:00
+TKT4014,CUST017,ORD1019,RET2014,,RETURN_STATUS,My fitness band strap broke. Can I return it?,MEDIUM,OPEN,Return request is recent; inspect return and policy before deciding.,2026-10-27T10:15:00,2026-10-27T10:15:00
+TKT4015,CUST018,ORD1020,,,ORDER_QUESTION,Can you help me with my HDMI adapter order?,LOW,OPEN,No return/refund case is linked; agent should ask what help is needed.,2026-10-27T11:45:00,2026-10-27T11:45:00

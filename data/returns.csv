@@ -1,0 +1,15 @@
+return_id,order_id,customer_id,product_name,return_requested_date,return_received_date,return_reason,return_status,item_condition,inspection_result
+RET2001,ORD1001,CUST001,Headphones,2026-10-12,2026-10-14,Defective product,RECEIVED,Unopened,Defect confirmed
+RET2002,ORD1002,CUST002,Wireless Mouse,2026-10-11,2026-10-12,Changed mind,RECEIVED,Good,Passed inspection
+RET2003,ORD1003,CUST003,Mechanical Keyboard,2026-10-14,,Wrong item received,REQUESTED,Unopened,Pending receipt
+RET2004,ORD1004,CUST004,Bluetooth Speaker,2026-10-10,2026-10-13,Sound issue,RECEIVED,Used,Defect confirmed
+RET2005,ORD1005,CUST005,USB-C Hub,2026-10-18,,Not compatible,REQUESTED,Unknown,Pending receipt
+RET2006,ORD1006,CUST006,Smart Watch,2026-10-08,2026-10-10,Battery issue,RECEIVED,Used,Defect confirmed
+RET2007,ORD1007,CUST007,Earbuds,2026-10-20,,Changed mind,REQUESTED,Unknown,Pending receipt
+RET2008,ORD1008,CUST008,Laptop Stand,2026-10-22,,Damaged on arrival,REQUESTED,Unknown,Pending receipt
+RET2009,ORD1009,CUST009,Webcam,2026-09-25,2026-09-29,Changed mind,RECEIVED,Good,Passed inspection
+RET2010,ORD1010,CUST010,Power Bank,2026-10-22,2026-10-24,Does not charge,RECEIVED,Used,Defect confirmed
+RET2011,ORD1013,CUST011,Gaming Controller,2026-10-09,2026-10-11,Buttons not working,RECEIVED,Used,Defect confirmed
+RET2012,ORD1015,CUST013,Desk Microphone,2026-10-13,,Changed mind,REJECTED,Opened,Outside return window
+RET2013,ORD1018,CUST016,Router,2026-10-14,2026-10-16,Connection issue,RECEIVED,Used,Defect confirmed
+RET2014,ORD1019,CUST017,Fitness Band,2026-10-26,,Strap damaged,REQUESTED,Unknown,Pending receipt

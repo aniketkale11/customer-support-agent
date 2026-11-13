@@ -1,0 +1,72 @@
+[
+  {
+    "id": "TC-01",
+    "query": "What is the carrier investigation window before declaring lost in transit?",
+    "expected_page": 5,
+    "topic": "Lost in Transit SLA",
+    "key_phrase": "seven (7) consecutive calendar days"
+  },
+  {
+    "id": "TC-02",
+    "query": "What are the four prerequisites required for refund eligibility?",
+    "expected_page": 9,
+    "topic": "Refund Eligibility Prerequisites",
+    "key_phrase": "four prerequisites"
+  },
+  {
+    "id": "TC-03",
+    "query": "Who is required to approve refund exceptions exceeding INR 10,000?",
+    "expected_page": 11,
+    "topic": "Supervisory Approval Matrix",
+    "key_phrase": "Operations Director"
+  },
+  {
+    "id": "TC-04",
+    "query": "What idempotency key format must be used for payment requests?",
+    "expected_page": 11,
+    "topic": "Idempotency Standards",
+    "key_phrase": "IDEMP-{order_id}-{proposal_id}"
+  },
+  {
+    "id": "TC-05",
+    "query": "What is the standard 14-day return window and restocking fee policy for remorse returns?",
+    "expected_page": 6,
+    "topic": "RMA Protocols & Restocking Fee Table",
+    "key_phrase": "fourteen (14) calendar day return policy"
+  },
+  {
+    "id": "TC-06",
+    "query": "What communication lexicon must agents use for PENDING_APPROVAL status?",
+    "expected_page": 9,
+    "topic": "Communication Lexicon",
+    "key_phrase": "routine supervisor authorization"
+  },
+  {
+    "id": "TC-07",
+    "query": "What happens if a lost parcel is delivered after a refund has already been issued?",
+    "expected_page": 5,
+    "topic": "Subsequent Parcel Delivery",
+    "key_phrase": "prepaid return label"
+  },
+  {
+    "id": "TC-08",
+    "query": "Can an AI agent directly execute payments or only stage proposals?",
+    "expected_page": 11,
+    "topic": "Segregation of Duties",
+    "key_phrase": "stage a proposal in status `PENDING_APPROVAL`"
+  },
+  {
+    "id": "TC-09",
+    "query": "Can I return a product if it was purchased with a discount code?",
+    "expected_page": 23,
+    "topic": "Discounts FAQ",
+    "key_phrase": "FAQ #55"
+  },
+  {
+    "id": "TC-10",
+    "query": "What should customer support do if a package arrives damaged during shipping?",
+    "expected_page": 21,
+    "topic": "Shipping Damage FAQ",
+    "key_phrase": "FAQ #43"
+  }
+]
