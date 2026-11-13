@@ -23,7 +23,6 @@ if "HTTPS_PROXY" in os.environ and "127.0.0.1:58080" in os.environ.get("HTTPS_PR
         os.environ.pop(k, None)
 
 import streamlit as st
-import pandas as pd
 from dotenv import load_dotenv
 
 # Ensure environment variables (like LangSmith and API keys) are freshly loaded
@@ -34,6 +33,14 @@ from langgraph.types import Command
 from src.workflow import build_workflow
 from src.database import query_db
 from src.guardrails import check_input_guardrail, sanitize_and_wrap_input
+from src.semantic_cache import (
+    check_semantic_cache,
+    store_in_semantic_cache,
+    is_cacheable_query,
+    get_cache_stats,
+    seed_default_cache,
+    clear_semantic_cache
+)
 
 
 # =====================================================================
@@ -106,6 +113,8 @@ with st.sidebar:
         - **Customer Portal:** Read-only & proposal staging.
         - **Supervisor Desk:** Authorized financial execution.
         - **Workflow Guard:** `LangGraph interrupt()`
+        - **Input Guardrail:** Active Injection Bouncer
+        - **Data Boundary:** XML Delimiter Isolation
         """
     )
 
@@ -114,6 +123,29 @@ with st.sidebar:
     if graph_img_path.exists():
         with st.expander("📊 View Architecture Flowchart", expanded=False):
             st.image(str(graph_img_path), caption="LangGraph State Machine with HITL", use_container_width=True)
+
+    st.markdown("---")
+    st.subheader("⚡ Semantic Cache")
+    cache_stats = get_cache_stats()
+    st.markdown(
+        f"""
+        - **Status:** Active 🟢
+        - **Cached Entries:** `{cache_stats['total_cached_entries']}`
+        - **Threshold:** `{cache_stats['similarity_threshold']}`
+        - **Engine:** ChromaDB (`all-MiniLM-L6-v2`)
+        """
+    )
+    col_c1, col_c2 = st.columns(2)
+    with col_c1:
+        if st.button("🌱 Pre-warm", use_container_width=True, help="Seed common FAQ responses"):
+            added = seed_default_cache()
+            st.toast(f"Seeded {added} common policy Q&As into cache!", icon="⚡")
+            st.rerun()
+    with col_c2:
+        if st.button("🗑️ Purge", use_container_width=True, help="Clear cache"):
+            clear_semantic_cache()
+            st.toast("Semantic cache cleared!", icon="🧹")
+            st.rerun()
 
     st.markdown("---")
     st.subheader("💡 Quick Test Scenarios")
@@ -164,6 +196,11 @@ with tab_customer:
     # Render customer conversation history
     for msg in st.session_state.chat_history:
         with st.chat_message(msg["role"]):
+            if msg.get("cached_info"):
+                ci = msg["cached_info"]
+                st.caption(
+                    f"⚡ *Served from Semantic Cache ({ci['similarity_score'] * 100:.1f}% match | {ci['latency_ms']}ms | 0 LLM Tokens)*"
+                )
             st.markdown(msg["content"])
             
             # Display tools called (if any)
@@ -208,80 +245,117 @@ with tab_customer:
                 st.toast(f"🛡️ Guardrail: False alarm cleared ({guard_result.guard_reason})", icon="ℹ️")
 
             # -------------------------------------------------------------
-            # LAYER 2: XML DELIMITER WRAPPING (<customer_query>)
+            # LAYER 2: SEMANTIC CACHE CHECK (Zero Cost, < 20ms Latency)
             # -------------------------------------------------------------
-            wrapped_input = sanitize_and_wrap_input(user_input)
+            cached_result = check_semantic_cache(user_input)
 
-            # Invoke Agent Workflow with XML Delimited Input
-            with st.chat_message("assistant"):
-                with st.spinner("Investigating records & policies..."):
-                    config = {"configurable": {"thread_id": st.session_state.thread_id}}
-                    inputs = {"messages": [HumanMessage(content=wrapped_input)]}
+            if cached_result and cached_result.get("hit"):
+                cached_answer = cached_result["response"]
+                sim_pct = cached_result["similarity_score"] * 100.0
+                latency = cached_result["latency_ms"]
 
-                try:
-                    result = workflow_app.invoke(inputs, config=config)
-                    
-                    # Check if the workflow paused on an interrupt()
-                    state_snapshot = workflow_app.get_state(config)
-                    pending_interrupt = None
-                    for task in state_snapshot.tasks:
-                        if hasattr(task, "interrupts") and task.interrupts:
-                            pending_interrupt = task.interrupts[0].value
-                            break
+                with st.chat_message("assistant"):
+                    st.caption(
+                        f"⚡ *Served from Semantic Cache ({sim_pct:.1f}% match | {latency:.1f}ms | 0 LLM Tokens)*"
+                    )
+                    st.markdown(cached_answer)
 
-                    result_messages = result.get("messages", [])
-                    tools_called = []
-                    final_response = "I have reviewed your inquiry."
+                st.session_state.chat_history.append({
+                    "role": "assistant",
+                    "content": cached_answer,
+                    "tools_called": [],
+                    "cached_info": cached_result
+                })
+            else:
+                # -------------------------------------------------------------
+                # LAYER 3: XML DELIMITER WRAPPING & AGENT WORKFLOW
+                # -------------------------------------------------------------
+                wrapped_input = sanitize_and_wrap_input(user_input)
 
-                    for m in result_messages:
-                        if hasattr(m, "tool_calls") and m.tool_calls:
-                            for tc in m.tool_calls:
-                                tools_called.append({
-                                    "name": tc.get("name"),
-                                    "args": tc.get("args")
-                                })
-                        elif isinstance(m, ToolMessage):
-                            if tools_called:
-                                tools_called[-1]["result"] = extract_clean_text(m.content)
-                        elif isinstance(m, AIMessage) and m.content:
-                            final_response = extract_clean_text(m.content)
+                # Invoke Agent Workflow with XML Delimited Input
+                with st.chat_message("assistant"):
+                    with st.spinner("Investigating records & policies..."):
+                        config = {"configurable": {"thread_id": st.session_state.thread_id}}
+                        inputs = {"messages": [HumanMessage(content=wrapped_input)]}
 
-                    # If an interrupt occurred, ensure customer sees a clear status update
-                    if pending_interrupt:
-                        st.session_state.pending_approval = pending_interrupt
-                        final_response = (
-                            f"📋 **Refund Proposal Staged (Awaiting Supervisor Review)**\n\n"
-                            f"Your return has passed inspection and a formal proposal (`{pending_interrupt.get('proposal_id')}`) "
-                            f"for **₹{pending_interrupt.get('amount', 0.0):,.2f}** has been generated.\n\n"
-                            f"Under company financial controls, this has been submitted to the **Supervisor Approval Queue**. "
-                            f"You will receive confirmation once the supervisor approves and executes the refund."
-                        )
+                    try:
+                        result = workflow_app.invoke(inputs, config=config)
+                        
+                        # Check if the workflow paused on an interrupt()
+                        state_snapshot = workflow_app.get_state(config)
+                        pending_interrupt = None
+                        for task in state_snapshot.tasks:
+                            if hasattr(task, "interrupts") and task.interrupts:
+                                pending_interrupt = task.interrupts[0].value
+                                break
 
-                    # Render response
-                    st.markdown(final_response)
+                        result_messages = result.get("messages", [])
+                        tools_called = []
+                        final_response = "I have reviewed your inquiry."
 
-                    if tools_called:
-                        with st.expander("🔍 Tools Used Behind the Scenes", expanded=False):
-                            for t in tools_called:
-                                st.markdown(f"- **Tool:** `{t['name']}`")
-                                st.markdown(f"  - **Arguments:** `{t['args']}`")
-                                if t.get("result"):
-                                    st.code(str(t["result"])[:300] + ("..." if len(str(t["result"])) > 300 else ""), language="json")
+                        for m in result_messages:
+                            if hasattr(m, "tool_calls") and m.tool_calls:
+                                for tc in m.tool_calls:
+                                    tools_called.append({
+                                        "name": tc.get("name"),
+                                        "args": tc.get("args")
+                                    })
+                            elif isinstance(m, ToolMessage):
+                                if tools_called:
+                                    tools_called[-1]["result"] = extract_clean_text(m.content)
+                            elif isinstance(m, AIMessage) and m.content:
+                                final_response = extract_clean_text(m.content)
 
-                    # Save to chat history
-                    st.session_state.chat_history.append({
-                        "role": "assistant",
-                        "content": final_response,
-                        "tools_called": tools_called
-                    })
+                        # If an interrupt occurred, ensure customer sees a clear status update
+                        if pending_interrupt:
+                            st.session_state.pending_approval = pending_interrupt
+                            final_response = (
+                                f"📋 **Refund Proposal Staged (Awaiting Supervisor Review)**\n\n"
+                                f"Your return has passed inspection and a formal proposal (`{pending_interrupt.get('proposal_id')}`) "
+                                f"for **₹{pending_interrupt.get('amount', 0.0):,.2f}** has been generated.\n\n"
+                                f"Under company financial controls, this has been submitted to the **Supervisor Approval Queue**. "
+                                f"You will receive confirmation once the supervisor approves and executes the refund."
+                            )
 
-                    # If pending approval, trigger notification
-                    if pending_interrupt:
-                        st.toast("🔔 New refund proposal routed to Supervisor Queue!", icon="⚠️")
+                        # Render response
+                        st.markdown(final_response)
 
-                except Exception as e:
-                    error_msg = f"An error occurred: {str(e)}"
-                    st.error(error_msg)
+                        if tools_called:
+                            with st.expander("🔍 Tools Used Behind the Scenes", expanded=False):
+                                for t in tools_called:
+                                    st.markdown(f"- **Tool:** `{t['name']}`")
+                                    st.markdown(f"  - **Arguments:** `{t['args']}`")
+                                    if t.get("result"):
+                                        st.code(str(t["result"])[:300] + ("..." if len(str(t["result"])) > 300 else ""), language="json")
+
+                        # -------------------------------------------------------------
+                        # LAYER 4: POPULATE SEMANTIC CACHE (IF ELIGIBLE)
+                        # -------------------------------------------------------------
+                        if not pending_interrupt and is_cacheable_query(user_input):
+                            tool_names = [t.get("name") for t in tools_called if t.get("name")]
+                            stored = store_in_semantic_cache(user_input, final_response, tool_names)
+                            if stored:
+                                st.toast("⚡ Policy response cached for instant future lookups!", icon="💾")
+
+                        # Save to chat history
+                        st.session_state.chat_history.append({
+                            "role": "assistant",
+                            "content": final_response,
+                            "tools_called": tools_called
+                        })
+
+                        # If pending approval, trigger notification
+                        if pending_interrupt:
+                            st.toast("🔔 New refund proposal routed to Supervisor Queue!", icon="⚠️")
+
+                    except Exception as e:
+                        error_msg = f"An error occurred: {str(e)}"
+                        st.error(error_msg)
+                        st.session_state.chat_history.append({
+                            "role": "assistant",
+                            "content": error_msg,
+                            "tools_called": []
+                        })
                     st.session_state.chat_history.append({
                         "role": "assistant",
                         "content": error_msg,
@@ -359,7 +433,6 @@ with tab_supervisor:
         "SELECT refund_id, order_id, customer_id, requested_amount, approved_amount, refund_status, provider_transaction_id, notes FROM refunds ORDER BY rowid DESC LIMIT 10"
     )
     if refund_rows:
-        df_refunds = pd.DataFrame(refund_rows)
-        st.dataframe(df_refunds, use_container_width=True)
+        st.dataframe(refund_rows, use_container_width=True)
     else:
         st.info("No records in refunds ledger.")
